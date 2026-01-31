@@ -11,6 +11,7 @@ Decentralized encrypted messaging system based on Solana blockchain. Messages ar
 - **Access Control**: Wallet-based ownership verification
 - **API**: Helius DAS for cNFT queries
 - **Wallet**: Phantom integration
+- **ZKP Ready**: Architecture prepared for zero-knowledge proof integration (coming soon)
 
 ## File Structure
 
@@ -84,3 +85,7 @@ Backend shared with `/notary/` system - same database, same encryption stack, di
 ## Development Status
 
 Experimental protocol on Solana Devnet. Not audited. Use at own risk.
+
+## Roadmap
+
+- **Zero-Knowledge Proofs**: Implementation planned for privacy-preserving message verification without revealing content
