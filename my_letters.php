@@ -146,7 +146,7 @@ header {
 
 .list-header {
     display: grid;
-    grid-template-columns: 40px 200px 1fr 120px 150px;
+    grid-template-columns: 200px 1fr 120px 150px;
     gap: 16px;
     padding: 12px 32px;
     background: white;
@@ -189,7 +189,7 @@ header {
 
 .message-row {
     display: grid;
-    grid-template-columns: 40px 200px 1fr 120px 150px;
+    grid-template-columns: 200px 1fr 120px 150px;
     gap: 16px;
     padding: 16px 32px;
     border-bottom: 1px solid #f5f5f5;
@@ -247,14 +247,6 @@ header {
 .message-row.unread {
     font-weight: 500;
     background: #fafafa;
-}
-
-.message-checkbox {
-    width: 16px;
-    height: 16px;
-    cursor: pointer;
-    border: 1px solid #d4d4d4;
-    border-radius: 0;
 }
 
 .message-sender {
@@ -583,7 +575,6 @@ header {
             </div>
 
             <div class="list-header">
-                <div></div>
                 <div class="sortable-header" onclick="sortMessages('sender')">
                     <span>Sender</span>
                     <span id="sort-arrow-sender" class="sort-arrow">▼</span>
@@ -924,7 +915,6 @@ header {
 
                 return `
                     <li class="message-row unread" data-asset-id="${escapeHtml(letter.asset_id)}">
-                        <input type="checkbox" class="message-checkbox" onclick="event.stopPropagation()" />
                         <div class="message-sender message-content-area" onclick="window.location.href='${viewUrl}'">${escapeHtml(senderDisplay)}</div>
                         <div class="message-content message-content-area" onclick="window.location.href='${viewUrl}'">
                             <span class="message-subject">${escapeHtml(letter.name)}</span>
