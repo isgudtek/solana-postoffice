@@ -70,7 +70,7 @@ Payment methods implemented in `subscription_payment.php`:
 
 ## Deployment
 
-Live at: https://is.gudtek.lol/postoffice/
+Live at: https://postoffice.gudtek.lol
 
 Backend shared with `/notary/` system - same database, same encryption stack, different frontend.
 
