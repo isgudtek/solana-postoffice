@@ -18,6 +18,47 @@
             color: #202124;
         }
 
+        header {
+            border-bottom: 1px solid #e5e5e5;
+            background: white;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 16px 32px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 16px;
+            font-weight: 700;
+            color: #0a0a0a;
+            letter-spacing: -0.03em;
+            text-transform: uppercase;
+            text-decoration: none;
+        }
+
+        .header-links {
+            display: flex;
+            gap: 24px;
+            align-items: center;
+        }
+
+        .header-link {
+            color: #525252;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+            transition: color 0.15s ease;
+        }
+
+        .header-link:hover {
+            color: #0a0a0a;
+        }
+
         .container {
             max-width: 800px;
             margin: 40px auto;
@@ -201,6 +242,17 @@
     </style>
 </head>
 <body>
+    <header>
+        <div class="header-content">
+            <a href="index.php" class="logo">Postoffice</a>
+            <nav class="header-links">
+                <a href="compose.php" class="header-link" style="color: #0a0a0a;">Compose</a>
+                <a href="my_letters.php" class="header-link">Inbox</a>
+                <a href="pricing.php" class="header-link">Pricing</a>
+            </nav>
+        </div>
+    </header>
+
     <div class="container">
         <a href="my_letters.php" class="back-link">← Back to Inbox</a>
 

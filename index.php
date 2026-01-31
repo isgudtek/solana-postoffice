@@ -421,10 +421,9 @@
 <body>
     <header>
         <div class="header-content">
-            <div class="logo">Postoffice</div>
+            <a href="index.php" class="logo">Postoffice</a>
             <nav class="header-links">
-                <a href="#features" class="header-link">Features</a>
-                <a href="#tech" class="header-link">Technology</a>
+                <a href="compose.php" class="header-link">Compose</a>
                 <a href="my_letters.php" class="header-link">Inbox</a>
                 <a href="pricing.php" class="header-link">Pricing</a>
             </nav>

@@ -363,9 +363,9 @@ $subscription_usd = round($subscription_sol * $sol_price_usd * 1.20, 2); // +20%
     </style>
 </head>
 <body>
-    <header class="header">
+    <header>
         <div class="header-content">
-            <a href="index.php" class="logo">Post Office</a>
+            <a href="index.php" class="logo">Postoffice</a>
             <nav class="header-links">
                 <a href="compose.php" class="header-link">Compose</a>
                 <a href="my_letters.php" class="header-link">Inbox</a>

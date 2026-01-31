@@ -21,6 +21,47 @@ body {
     line-height: 1.5;
 }
 
+header {
+    border-bottom: 1px solid #e5e5e5;
+    background: white;
+}
+
+.header-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 16px 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.logo {
+    font-size: 16px;
+    font-weight: 700;
+    color: #0a0a0a;
+    letter-spacing: -0.03em;
+    text-transform: uppercase;
+    text-decoration: none;
+}
+
+.header-links {
+    display: flex;
+    gap: 24px;
+    align-items: center;
+}
+
+.header-link {
+    color: #525252;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    transition: color 0.15s ease;
+}
+
+.header-link:hover {
+    color: #0a0a0a;
+}
+
 .inbox-container {
     max-width: 1400px;
     margin: 0 auto;
@@ -500,21 +541,18 @@ body {
     </style>
 </head>
 <body>
-    <div class="inbox-container">
-        <div class="brand-header">
-            <div class="brand-info">
-                <div class="brand-logo">Postoffice</div>
-                <div class="brand-tagline">Encrypted Mail Service</div>
-            </div>
-            <div class="header-actions">
-                <button class="compose-btn" onclick="window.location='compose.php'">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M12 5v14M5 12h14"></path>
-                    </svg>
-                    Compose
-                </button>
-            </div>
+    <header>
+        <div class="header-content">
+            <a href="index.php" class="logo">Postoffice</a>
+            <nav class="header-links">
+                <a href="compose.php" class="header-link">Compose</a>
+                <a href="my_letters.php" class="header-link" style="color: #0a0a0a;">Inbox</a>
+                <a href="pricing.php" class="header-link">Pricing</a>
+            </nav>
         </div>
+    </header>
+
+    <div class="inbox-container">
 
         <div class="wallet-section">
             <button id="connectBtn" class="btn" onclick="connectWallet()">
