@@ -1,84 +1,86 @@
-# POSTOFFICE - Encrypted Messaging on Solana
+# Postoffice
 
-## 🚀 Overview
-Professional Gmail-style messaging interface for encrypted messages on Solana blockchain. Clean, accessible design focused on usability and trust, while maintaining all blockchain/encryption functionality.
+Decentralized encrypted messaging system based on Solana blockchain. Messages are minted as compressed NFTs with AES-256-CBC encryption, stored on IPFS, and only decryptable by the recipient wallet holder.
 
-## 📁 File Structure
+## Architecture
+
+- **Blockchain**: Solana (Devnet)
+- **NFT Standard**: Compressed NFTs (Metaplex Bubblegum)
+- **Encryption**: AES-256-CBC, client-side
+- **Storage**: IPFS via Pinata
+- **Access Control**: Wallet-based ownership verification
+- **API**: Helius DAS for cNFT queries
+- **Wallet**: Phantom integration
+
+## File Structure
+
 ```
-/var/www/gudtek.lol/is/postoffice/
-├── index.php          - Landing page with cyber-tech hype
-├── compose.php        - Send encrypted messages
-├── my_letters.php     - View owned encrypted messages
-├── view.php           - View individual encrypted messages
-├── api.php            - API proxy to notary backend
-└── README.md          - This file
+postoffice/
+├── index.php                    - Landing page
+├── compose.php                  - Message composition interface
+├── my_letters.php              - Inbox view with cNFT list
+├── view.php                    - Individual message viewer
+├── pricing.php                 - Subscription plans (SOL/Token/Stripe)
+├── api.php                     - API proxy to backend
+├── subscription_payment.php    - Payment handler
+└── init_subscriptions_db.php   - Database initialization
 ```
 
-## 🎨 Design Theme
-- **Gmail-inspired**: Clean, professional, accessible
-- **Color palette**: Gmail blues (#4285f4), clean whites, subtle grays
-- **Typography**: Google Sans, Roboto, sans-serif
-- **Layout**: List/table view for inbox
-- **Rounded corners** (8-16px border-radius)
-- **Subtle shadows** for depth
-- **Light theme** with professional aesthetics
-- **Generous padding** and whitespace
+## Database Schema
 
-## 🎯 Branding
-- **Name**: POSTOFFICE
-- **Tagline**: "Encrypted Messaging on Solana"
-- **Positioning**: Professional secure communication, blockchain-native
-- **Target**: Businesses, professionals, privacy-conscious users
-- **Messaging**: Secure, reliable, permanent, professional
+### sealed_letters
+Shared with notary system - stores encrypted message metadata and IPFS CID.
 
-## 🔗 URLs
-- Landing: https://is.gudtek.lol/postoffice/
-- Compose: https://is.gudtek.lol/postoffice/compose.php
-- My Messages: https://is.gudtek.lol/postoffice/my_letters.php
+### postoffice_subscriptions
+```sql
+- wallet_address: TEXT (unique)
+- subscription_type: TEXT
+- payment_method: TEXT (sol|token|stripe)
+- amount: REAL
+- transaction_id: TEXT
+- start_date: TEXT
+- end_date: TEXT
+- status: TEXT (active|expired)
+```
 
-## ⚙️ Backend
-- Shares same backend as `/notary/` via API proxy
-- Same database tables (`sealed_letters`)
-- Same encryption (AES-256-CBC)
-- Same Solana cNFT infrastructure
-- Same IPFS storage (Pinata)
-- **Completely isolated frontend** - different branding, styling, messaging
+### postoffice_payments
+Transaction log for all subscription payments.
 
-## 🔐 Technical Specs (Hyped)
-- Solana Blockchain (Devnet)
-- Compressed NFTs (Metaplex Bubblegum)
-- AES-256-CBC Encryption
-- IPFS Content Storage
-- Wallet-Based Access Control
-- On-Chain Ownership Verification
-- Helius DAS API Integration
-- Phantom Wallet Compatible
+## Message Flow
 
-## 💎 Features
-1. **End-to-End Encryption** - AES-256-CBC encryption
-2. **Blockchain Native** - Permanent, immutable on Solana
-3. **True Ownership** - Your message is an NFT you control
-4. **Fast Delivery** - Powered by Solana
-5. **Low Cost** - Minimal fees with compressed NFTs
-6. **IPFS Storage** - Distributed, censorship-resistant
+1. Sender composes message in compose.php
+2. Client-side AES-256-CBC encryption using recipient's public key
+3. Encrypted payload uploaded to IPFS
+4. cNFT minted to recipient's wallet with IPFS CID in metadata
+5. Recipient views inbox (my_letters.php) via Helius DAS API
+6. Ownership verified via RPC before decryption
+7. Client-side decryption if ownership confirmed
 
-## 🎮 User Flow
-1. Visit landing page (hyped intro)
-2. Click "Send Encrypted Message"
-3. Fill in: email, recipient wallet, message
-4. Connect Phantom wallet
-5. Message encrypted client-side
-6. Minted as cNFT to recipient wallet
-7. Only recipient can decrypt
+## Subscription Model
 
-## 📊 Stats (Displayed on Landing)
-- ∞ Permanent Storage
-- 256-bit AES Encryption  
-- <1¢ Cost Per Message
+- **Base**: 0.1 SOL/month
+- **Token Discount**: 50% off with $POST tokens
+- **Stripe**: +20% processing fee markup
 
-## 🚨 Notes
-- Currently on Devnet only
-- Experimental protocol
-- Backend shared with notary system (invisible to users)
-- Frontend completely independent
-- Can be marketed separately without mentioning notary
+Payment methods implemented in `subscription_payment.php`:
+- SOL transfer verification
+- Token transfer (placeholder)
+- Stripe Checkout integration
+
+## Deployment
+
+Live at: https://is.gudtek.lol/postoffice/
+
+Backend shared with `/notary/` system - same database, same encryption stack, different frontend.
+
+## Security Notes
+
+- Encryption happens client-side before transmission
+- Private keys never leave the user's wallet
+- Server only stores encrypted blobs and IPFS CIDs
+- Ownership verification required for decryption attempts
+- No central authority can decrypt messages
+
+## Development Status
+
+Experimental protocol on Solana Devnet. Not audited. Use at own risk.
