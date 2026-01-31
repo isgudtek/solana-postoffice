@@ -574,6 +574,8 @@
             <div class="footer-links">
                 <a href="/" class="footer-link">gudtek.lol</a>
                 <span style="color: #d4d4d4;">|</span>
+                <a href="https://github.com/isgudtek/solana-postoffice" target="_blank" class="footer-link">GitHub</a>
+                <span style="color: #d4d4d4;">|</span>
                 <span class="footer-link" style="cursor: default;">Experimental Protocol</span>
                 <span style="color: #d4d4d4;">|</span>
                 <span class="footer-link" style="cursor: default;">Devnet Only</span>
