@@ -1,0 +1,33 @@
+# Plan files
+SAAS_SUBSCRIPTION_PLAN.md
+*_PLAN.md
+*.plan
+
+# Backup files
+*.bak
+*.backup
+*.old
+
+# Admin tools
+admin_*.php
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Cache
+*_cache.json
+cache/
+
+# Logs
+*.log
+logs/
+
+# Environment
+.env
+.env.*
+
+# OS
+.DS_Store
+Thumbs.db
