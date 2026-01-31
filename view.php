@@ -200,6 +200,89 @@ if (!preg_match('/^po[a-z0-9]{12}$/', $slug)) {
         .back-link:hover {
             text-decoration: underline;
         }
+
+        /* Modal styles */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(10, 10, 10, 0.6);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 0;
+            padding: 32px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+            border: 1px solid #e5e5e5;
+        }
+        .modal-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #0a0a0a;
+            margin-bottom: 16px;
+            letter-spacing: -0.02em;
+        }
+        .modal-body {
+            color: #525252;
+            line-height: 1.6;
+            margin-bottom: 24px;
+            font-size: 14px;
+        }
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+        }
+        .modal-btn {
+            padding: 10px 20px;
+            border: 1px solid #d4d4d4;
+            border-radius: 0;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            background: white;
+            font-family: inherit;
+            font-size: 13px;
+            letter-spacing: -0.01em;
+        }
+        .modal-btn-cancel {
+            color: #525252;
+        }
+        .modal-btn-cancel:hover {
+            background: #fafafa;
+            border-color: #0a0a0a;
+        }
+        .modal-btn-confirm {
+            background: #0a0a0a;
+            color: white;
+            border-color: #0a0a0a;
+        }
+        .modal-btn-confirm:hover {
+            background: #262626;
+            border-color: #262626;
+        }
+        .form-group {
+            margin-bottom: 16px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: #0a0a0a;
+            margin-bottom: 8px;
+        }
     </style>
 </head>
 <body>
@@ -497,93 +580,241 @@ if (!preg_match('/^po[a-z0-9]{12}$/', $slug)) {
             window.location.href = 'compose.php?reply=true';
         }
 
-        // Send and Burn functions
+        // Send to another wallet function
         async function sendMessage() {
+            if (!connectedWallet || typeof window.solana === 'undefined') {
+                modalAlert('Please connect your wallet first.', 'Wallet Required');
+                return;
+            }
+
             if (!currentAssetId) {
-                alert('Message information not loaded');
+                modalAlert('Message information not loaded', 'Error');
                 return;
             }
 
-            const recipient = prompt('Enter recipient wallet address:');
-            if (!recipient) return;
+            const recipientHtml = `
+                <div style="margin-bottom: 1rem;">
+                    <p>Send <strong>${escapeHtml(currentLetterName)}</strong> to another wallet.</p>
+                    <p style="font-size: 0.875rem; color: #718096; margin-top: 0.5rem;">
+                        The recipient will own this sealed letter and be able to decrypt it.
+                    </p>
+                </div>
+                <div class="form-group">
+                    <label>Recipient Wallet Address</label>
+                    <input type="text" id="sendRecipientAddress" placeholder="Solana wallet address..."
+                           style="width: 100%; padding: 0.75rem; background: white; color: #1a202c;
+                                  border: 2px solid #e2e8f0; border-radius: 8px; font-family: monospace;">
+                </div>
+                <p style="font-size: 0.8rem; opacity: 0.7; margin-top: 0.5rem; color: #f56565;">
+                    ⚠️ This action is irreversible. The NFT will be transferred permanently.
+                </p>
+            `;
 
-            if (recipient.length < 32 || recipient.length > 44) {
-                alert('Invalid Solana wallet address');
-                return;
-            }
+            modalConfirm(recipientHtml, async () => {
+                const recipient = document.getElementById('sendRecipientAddress')?.value?.trim();
 
-            if (!confirm(`Send "${currentLetterName}" to ${recipient}?\n\nThis action cannot be undone.`)) {
-                return;
-            }
-
-            try {
-                const wallet = localStorage.getItem('postoffice_wallet');
-                if (!wallet) {
-                    alert('Please connect your wallet first');
+                if (!recipient) {
+                    modalAlert('Please enter a recipient wallet address.', 'Error');
                     return;
                 }
+
+                if (recipient.length < 32 || recipient.length > 44) {
+                    modalAlert('Invalid Solana wallet address format.', 'Error');
+                    return;
+                }
+
+                await executeSendMessage(recipient);
+            }, 'Send Message', 'Send');
+        }
+
+        async function executeSendMessage(recipient) {
+            try {
+                // Check balance and fund if needed
+                const canProceed = await checkAndFundWallet();
+                if (!canProceed) {
+                    return;
+                }
+
+                const statusBox = document.getElementById('statusBox');
+                const statusText = document.getElementById('statusText');
+                statusBox.className = 'status-box info';
+                statusBox.style.display = 'block';
+                statusText.textContent = 'Building transfer transaction...';
 
                 const response = await fetch('/notary/api.php?action=buildTransferTx', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         assetId: currentAssetId,
-                        wallet: wallet,
+                        wallet: connectedWallet,
                         recipient: recipient
                     })
                 });
 
                 const data = await response.json();
+
                 if (!data.success) {
-                    alert('Failed to build transaction: ' + (data.error || 'Unknown error'));
+                    statusBox.className = 'status-box error';
+                    statusText.textContent = 'Failed to build transaction: ' + (data.error || 'Unknown error');
                     return;
                 }
 
-                // Handle transaction signing and sending (implementation from my_letters.php)
-                alert('Transaction sent successfully!');
-                window.location.href = 'my_letters.php';
+                statusText.textContent = 'Please approve the transaction in your wallet...';
+
+                // Decode and sign transaction
+                const transactionBuffer = Uint8Array.from(atob(data.transaction), c => c.charCodeAt(0));
+                const transaction = solanaWeb3.Transaction.from(transactionBuffer);
+
+                const configResp = await fetch('/nft/config.json');
+                const config = await configResp.json();
+                const connection = new solanaWeb3.Connection(config.rpc_url, 'confirmed');
+
+                const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
+                transaction.recentBlockhash = blockhash;
+
+                const signedTx = await window.solana.signTransaction(transaction);
+
+                statusText.textContent = 'Sending transaction...';
+
+                const signature = await connection.sendRawTransaction(signedTx.serialize());
+
+                statusText.textContent = 'Confirming transfer...';
+
+                await connection.confirmTransaction({ signature, blockhash, lastValidBlockHeight }, 'confirmed');
+
+                statusBox.className = 'status-box success';
+                statusText.textContent = '✅ Transfer successful!';
+
+                modalAlert(
+                    `Sealed letter transferred successfully!<br><br>
+                    <strong>${escapeHtml(currentLetterName)}</strong> has been sent to:<br>
+                    <code style="font-size: 0.75rem; word-break: break-all;">${escapeHtml(recipient)}</code><br><br>
+                    <a href="https://solscan.io/tx/${signature}?cluster=devnet" target="_blank"
+                       style="color: #4285f4; text-decoration: underline;">View on Solscan</a>`,
+                    'Transfer Complete'
+                );
+
+                setTimeout(() => {
+                    window.location.href = 'my_letters.php';
+                }, 2000);
+
             } catch (error) {
-                alert('Error: ' + error.message);
+                console.error('Transfer error:', error);
+                const statusBox = document.getElementById('statusBox');
+                const statusText = document.getElementById('statusText');
+                statusBox.className = 'status-box error';
+                statusBox.style.display = 'block';
+                statusText.textContent = '❌ Error: ' + error.message;
             }
         }
 
+        // Burn message function
         async function burnMessage() {
+            if (!connectedWallet || typeof window.solana === 'undefined') {
+                modalAlert('Please connect your wallet first.', 'Wallet Required');
+                return;
+            }
+
             if (!currentAssetId) {
-                alert('Message information not loaded');
+                modalAlert('Message information not loaded', 'Error');
                 return;
             }
 
-            if (!confirm(`⚠️ WARNING: PERMANENT DESTRUCTION\n\nYou are about to permanently destroy "${currentLetterName}".\n\nThis action CANNOT be undone.\n\nAre you sure?`)) {
-                return;
-            }
+            const burnHtml = `
+                <div style="color: #f56565; margin-bottom: 1rem; font-weight: bold;">
+                    ⚠️ WARNING: PERMANENT DESTRUCTION
+                </div>
+                <p>You are about to <strong>permanently destroy</strong> this sealed letter:</p>
+                <p style="margin: 1rem 0; font-size: 1.2rem; font-weight: 600;">${escapeHtml(currentLetterName)}</p>
+                <p style="font-size: 0.875rem; color: #718096;">
+                    The NFT will be permanently burned and removed from your wallet.
+                    The encrypted content will remain on IPFS but become inaccessible.
+                </p>
+                <p style="font-size: 0.875rem; color: #f56565; margin-top: 1rem;">
+                    This action cannot be undone.
+                </p>
+            `;
 
+            modalConfirm(burnHtml, async () => {
+                await executeBurnMessage();
+            }, 'Burn Sealed Letter', 'Burn Forever');
+        }
+
+        async function executeBurnMessage() {
             try {
-                const wallet = localStorage.getItem('postoffice_wallet');
-                if (!wallet) {
-                    alert('Please connect your wallet first');
+                // Check balance and fund if needed
+                const canProceed = await checkAndFundWallet();
+                if (!canProceed) {
                     return;
                 }
+
+                const statusBox = document.getElementById('statusBox');
+                const statusText = document.getElementById('statusText');
+                statusBox.className = 'status-box info';
+                statusBox.style.display = 'block';
+                statusText.textContent = 'Building burn transaction...';
 
                 const response = await fetch('/notary/api.php?action=buildBurnTx', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         assetId: currentAssetId,
-                        wallet: wallet
+                        wallet: connectedWallet
                     })
                 });
 
                 const data = await response.json();
+
                 if (!data.success) {
-                    alert('Failed to build transaction: ' + (data.error || 'Unknown error'));
+                    statusBox.className = 'status-box error';
+                    statusText.textContent = 'Failed to build transaction: ' + (data.error || 'Unknown error');
                     return;
                 }
 
-                // Handle transaction signing and sending
-                alert('Message burned successfully!');
-                window.location.href = 'my_letters.php';
+                statusText.textContent = 'Please approve the transaction in your wallet...';
+
+                // Decode and sign transaction
+                const transactionBuffer = Uint8Array.from(atob(data.transaction), c => c.charCodeAt(0));
+                const transaction = solanaWeb3.Transaction.from(transactionBuffer);
+
+                const configResp = await fetch('/nft/config.json');
+                const config = await configResp.json();
+                const connection = new solanaWeb3.Connection(config.rpc_url, 'confirmed');
+
+                const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
+                transaction.recentBlockhash = blockhash;
+
+                const signedTx = await window.solana.signTransaction(transaction);
+
+                statusText.textContent = 'Sending burn transaction...';
+
+                const signature = await connection.sendRawTransaction(signedTx.serialize());
+
+                statusText.textContent = 'Confirming burn...';
+
+                await connection.confirmTransaction({ signature, blockhash, lastValidBlockHeight }, 'confirmed');
+
+                statusBox.className = 'status-box success';
+                statusText.textContent = '✅ Message burned successfully!';
+
+                modalAlert(
+                    `Message permanently destroyed.<br><br>
+                    <a href="https://solscan.io/tx/${signature}?cluster=devnet" target="_blank"
+                       style="color: #4285f4; text-decoration: underline;">View on Solscan</a>`,
+                    'Burn Complete'
+                );
+
+                setTimeout(() => {
+                    window.location.href = 'my_letters.php';
+                }, 2000);
+
             } catch (error) {
-                alert('Error: ' + error.message);
+                console.error('Burn error:', error);
+                const statusBox = document.getElementById('statusBox');
+                const statusText = document.getElementById('statusText');
+                statusBox.className = 'status-box error';
+                statusBox.style.display = 'block';
+                statusText.textContent = '❌ Error: ' + error.message;
             }
         }
 
@@ -625,6 +856,118 @@ if (!preg_match('/^po[a-z0-9]{12}$/', $slug)) {
                 console.error('Failed to fetch letter metadata:', error);
             }
         });
+
+        // Modal helper functions
+        function showModal(title, bodyHtml, buttons) {
+            const overlay = document.getElementById('modalOverlay');
+            const titleEl = document.getElementById('modalTitle');
+            const bodyEl = document.getElementById('modalBody');
+            const buttonsEl = document.getElementById('modalButtons');
+
+            titleEl.textContent = title;
+            bodyEl.innerHTML = bodyHtml;
+            buttonsEl.innerHTML = '';
+
+            buttons.forEach(btn => {
+                const button = document.createElement('button');
+                button.className = btn.className || 'modal-btn';
+                button.textContent = btn.text;
+                button.onclick = () => {
+                    closeModal();
+                    if (btn.callback) btn.callback();
+                };
+                buttonsEl.appendChild(button);
+            });
+
+            overlay.classList.add('active');
+
+            // Close on ESC key
+            const escHandler = (e) => {
+                if (e.key === 'Escape') {
+                    closeModal();
+                    document.removeEventListener('keydown', escHandler);
+                }
+            };
+            document.addEventListener('keydown', escHandler);
+
+            // Close on click outside
+            overlay.onclick = (e) => {
+                if (e.target === overlay) {
+                    closeModal();
+                }
+            };
+        }
+
+        function closeModal() {
+            document.getElementById('modalOverlay').classList.remove('active');
+        }
+
+        function modalAlert(message, title = 'Notice') {
+            showModal(title, message, [
+                { text: 'OK', className: 'modal-btn modal-btn-confirm', callback: null }
+            ]);
+        }
+
+        function modalConfirm(message, onConfirm, title = 'Confirm', confirmText = 'Confirm') {
+            showModal(title, message, [
+                { text: 'Cancel', className: 'modal-btn modal-btn-cancel', callback: null },
+                { text: confirmText, className: 'modal-btn modal-btn-confirm', callback: onConfirm }
+            ]);
+        }
+
+        // Check wallet balance and auto-fund if needed
+        async function checkAndFundWallet() {
+            const statusBox = document.getElementById('statusBox');
+            const statusText = document.getElementById('statusText');
+
+            try {
+                statusBox.className = 'status-box info';
+                statusBox.style.display = 'block';
+                statusText.textContent = 'Checking wallet balance...';
+
+                const response = await fetch('check_and_fund.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ wallet: connectedWallet })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    if (data.funded) {
+                        statusBox.className = 'status-box success';
+                        statusText.textContent = data.message;
+                        await new Promise(resolve => setTimeout(resolve, 2000));
+                    }
+                    return true;
+                } else {
+                    statusBox.className = 'status-box error';
+                    statusText.textContent = data.error || 'Could not check balance';
+                    return false;
+                }
+            } catch (error) {
+                console.error('Balance check error:', error);
+                return true; // Continue anyway if check fails
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
     </script>
+
+    <!-- Modal overlay -->
+    <div id="modalOverlay" class="modal-overlay">
+        <div class="modal-content">
+            <div id="modalTitle" class="modal-title"></div>
+            <div id="modalBody" class="modal-body"></div>
+            <div id="modalButtons" class="modal-buttons"></div>
+        </div>
+    </div>
+
+    <!-- Load Solana Web3.js for transaction handling -->
+    <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.js"></script>
 </body>
 </html>
