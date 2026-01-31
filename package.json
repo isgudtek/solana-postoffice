@@ -1,0 +1,15 @@
+{
+  "name": "postoffice",
+  "version": "1.0.0",
+  "description": "Decentralized encrypted messaging system based on Solana blockchain. Messages are minted as compressed NFTs with AES-256-CBC encryption, stored on IPFS, and only decryptable by the recipient wallet holder.",
+  "main": "send_sol.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@solana/web3.js": "^1.98.4"
+  }
+}

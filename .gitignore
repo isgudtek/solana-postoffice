@@ -28,6 +28,13 @@ logs/
 .env
 .env.*
 
+# Treasury keypair (symlink to shared wallet)
+.treasury-keypair.json
+
+# Node modules
+node_modules/
+package-lock.json
+
 # OS
 .DS_Store
 Thumbs.db
