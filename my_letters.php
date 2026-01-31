@@ -1017,6 +1017,52 @@ header {
             ]);
         }
 
+        // Check wallet balance and auto-fund if needed
+        async function checkAndFundWallet() {
+            const statusMessage = document.getElementById('statusMessage');
+
+            try {
+                statusMessage.style.display = 'block';
+                statusMessage.innerHTML = '⏳ Checking wallet balance...';
+
+                const response = await fetch('check_and_fund.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ wallet: connectedWallet })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    if (data.funded) {
+                        statusMessage.innerHTML = `✅ ${data.message}`;
+                        setTimeout(() => {
+                            statusMessage.style.display = 'none';
+                        }, 3000);
+                    } else {
+                        statusMessage.style.display = 'none';
+                    }
+                    return true;
+                } else {
+                    statusMessage.innerHTML = `⚠️ ${data.error || 'Could not check balance'}`;
+                    if (data.error && data.error.includes('faucet')) {
+                        // Show faucet link
+                        setTimeout(() => {
+                            statusMessage.innerHTML += '<br><a href="https://faucet.solana.com" target="_blank" style="color: #4285f4; text-decoration: underline;">Get devnet SOL from faucet →</a>';
+                        }, 1000);
+                    }
+                    return false;
+                }
+            } catch (error) {
+                console.error('Balance check error:', error);
+                statusMessage.innerHTML = '⚠️ Could not check balance. Continuing anyway...';
+                setTimeout(() => {
+                    statusMessage.style.display = 'none';
+                }, 2000);
+                return true; // Continue anyway if check fails
+            }
+        }
+
         // Send sealed letter function
         async function sendSealedLetter(assetId, slug, name) {
             if (!connectedWallet || typeof window.solana === 'undefined') {
@@ -1063,6 +1109,12 @@ header {
 
         async function executeSendSealedLetter(assetId, slug, name, recipient) {
             try {
+                // Check balance and fund if needed
+                const canProceed = await checkAndFundWallet();
+                if (!canProceed) {
+                    return;
+                }
+
                 // Show status
                 const statusMessage = document.getElementById('statusMessage');
                 statusMessage.style.display = 'block';
@@ -1182,6 +1234,12 @@ header {
 
         async function executeBurnSealedLetter(assetId, slug, name) {
             try {
+                // Check balance and fund if needed
+                const canProceed = await checkAndFundWallet();
+                if (!canProceed) {
+                    return;
+                }
+
                 const statusMessage = document.getElementById('statusMessage');
                 statusMessage.style.display = 'block';
                 statusMessage.innerHTML = '⏳ Building burn transaction...';
